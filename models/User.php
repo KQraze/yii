@@ -2,52 +2,140 @@
 
 namespace app\models;
 
-class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
+use Yii;
+
+/**
+ * This is the model class for table "user".
+ *
+ * @property int $id
+ * @property string $full_name
+ * @property string $phone
+ * @property string $email
+ * @property string $username
+ * @property string $password
+ * @property string $role
+ * @property string $authKey
+ *
+ * @property Request[] $requests
+ */
+class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
 
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
-
+    public string $authKey = '';
+    /**
+     * ENUM field values
+     */
+    const ROLE_ADMIN = 'admin';
+    const ROLE_USER = 'user';
 
     /**
      * {@inheritdoc}
      */
-    public static function findIdentity($id)
+    public static function tableName()
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        return 'user';
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function findIdentityByAccessToken($token, $type = null)
+    public function rules()
     {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
+        return [
+            [['role'], 'default', 'value' => 'user'],
+            [['full_name', 'phone', 'email', 'username', 'password'], 'required'],
+            [['full_name', 'email', 'username'], 'string', 'max' => 100],
+            [['phone'], 'string', 'min' => 6, 'max' => 20],
+            [['password'], 'string', 'max' => 255],
+            [['username'], 'unique'],
+            [['username'], 'match', 'pattern' => '/^[A-z]\w*$/i'],
+            [['full_name'], 'match', 'pattern' => '/^[А-яЁё -]*$/u'],
+            [['email'], 'email'],
+        ];
+    }
 
-        return null;
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'full_name' => 'ФИО',
+            'phone' => 'Телефон',
+            'email' => 'Почта',
+            'username' => 'Ник',
+            'password' => 'Пароль',
+            'role' => 'Роль',
+        ];
+    }
+
+    /**
+     * Gets query for [[Requests]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getRequests()
+    {
+        return $this->hasMany(Request::class, ['user_id' => 'id']);
+    }
+
+
+    /**
+     * column role ENUM value labels
+     * @return string[]
+     */
+    public static function optsRole()
+    {
+        return [
+            self::ROLE_ADMIN => 'admin',
+            self::ROLE_USER => 'user',
+        ];
+    }
+
+    /**
+     * @return string
+     */
+    public function displayRole()
+    {
+        return self::optsRole()[$this->role];
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRoleAdmin()
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function setRoleToAdmin()
+    {
+        $this->role = self::ROLE_ADMIN;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRoleUser()
+    {
+        return $this->role === self::ROLE_USER;
+    }
+
+    public function setRoleToUser()
+    {
+        $this->role = self::ROLE_USER;
+    }
+
+    /**
+     * Finds an identity by the given ID.
+     *
+     * @param string|int $id the ID to be looked for
+     * @return User the identity object that matches the given ID.
+     */
+    public static function findIdentity($id)
+    {
+        return static::findOne($id);
     }
 
     /**
@@ -58,17 +146,22 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public static function findByUsername($username)
     {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return static::findOne(['username' => $username]);
     }
 
     /**
-     * {@inheritdoc}
+     * Finds an identity by the given token.
+     *
+     * @param string $token the token to be looked for
+     * @return User the identity object that matches the given token.
+     */
+    public static function findIdentityByAccessToken($token, $type = null)
+    {
+        return static::findOne(['access_token' => $token]);
+    }
+
+    /**
+     * @return int|string current user ID
      */
     public function getId()
     {
@@ -76,29 +169,30 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @return string|null current user auth key
      */
-    public function getAuthKey()
+    public function getAuthKey(): ?string
     {
         return $this->authKey;
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $authKey
+     * @return bool|null if auth key is valid for current user
      */
     public function validateAuthKey($authKey)
     {
-        return $this->authKey === $authKey;
+        return $this->getAuthKey() === $authKey;
     }
 
-    /**
-     * Validates password
-     *
-     * @param string $password password to validate
-     * @return bool if password provided is valid for current user
-     */
     public function validatePassword($password)
     {
-        return $this->password === $password;
+        return $this->password === md5($password);
+    }
+
+    public function beforeSave($insert)
+    {
+        $this->password = md5($this->password);
+        return parent::beforeSave($insert);
     }
 }
