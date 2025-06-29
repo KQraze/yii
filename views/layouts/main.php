@@ -40,13 +40,14 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav'],
         'items' => [
-            ['label' => 'Register', 'url' => ['/user/create'], 'visible' => Auth::isGuest()],
-            Yii::$app->user->isGuest
-                ? ['label' => 'Login', 'url' => ['/site/login']]
+            ['label' => 'Контакты', 'url' => ['/contact/index'], 'visible' => !Auth::isGuest()],
+            ['label' => 'События', 'url' => ['/event/index'], 'visible' => !Auth::isGuest()],
+            Auth::isGuest()
+                ? ['label' => 'Вход', 'url' => ['/site/login']]
                 : '<li class="nav-item">'
                     . Html::beginForm(['/site/logout'])
                     . Html::submitButton(
-                        'Logout (' . Yii::$app->user->identity->username . ')',
+                        'Выход (' . Auth::user()->username . ')',
                         ['class' => 'nav-link btn btn-link logout']
                     )
                     . Html::endForm()

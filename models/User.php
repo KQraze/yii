@@ -9,11 +9,13 @@ use Yii;
  *
  * @property int $id
  * @property string $full_name
- * @property string $login
+ * @property string $username
  * @property string $password
+ * @property string $authKey
  */
 class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
+    public string $authKey = '';
     /**
      * {@inheritdoc}
      */
@@ -28,10 +30,10 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     public function rules()
     {
         return [
-            [['full_name', 'login', 'password'], 'required'],
-            [['full_name', 'login'], 'string', 'max' => 70],
+            [['full_name', 'username', 'password'], 'required'],
+            [['full_name', 'username'], 'string', 'max' => 70],
             [['password'], 'string', 'max' => 255],
-            [['login'], 'unique'],
+            [['username'], 'unique'],
         ];
     }
 
@@ -42,9 +44,9 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
     {
         return [
             'id' => 'ID',
-            'full_name' => 'Full Name',
-            'login' => 'Login',
-            'password' => 'Password',
+            'full_name' => 'Имя',
+            'username' => 'Ник',
+            'password' => 'Пароль',
         ];
     }
 
@@ -55,7 +57,7 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 
     public static function findByUsername($username)
     {
-        return static::findOne(['login' => $username]);
+        return static::findOne(['username' => $username]);
     }
 
     /**
@@ -82,7 +84,7 @@ class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
      */
     public function getAuthKey()
     {
-        return $this->auth_key;
+        return $this->authKey;
     }
 
     /**

@@ -1,6 +1,6 @@
 <?php
 
-use app\models\User;
+use app\models\Event;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\grid\ActionColumn;
@@ -8,16 +8,17 @@ use yii\grid\GridView;
 
 /** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var app\models\EventSearch $searchModel */
 
-$this->title = 'Users';
+$this->title = 'События';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="user-index">
+<div class="event-index">
 
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Create User', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Создать событие', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
 
 
@@ -27,12 +28,18 @@ $this->params['breadcrumbs'][] = $this->title;
             ['class' => 'yii\grid\SerialColumn'],
 
             'id',
-            'full_name',
-            'username',
-            'password',
+            'date',
+            'title',
+            'description',
+            [
+                'attribute' => 'contact_id',
+                'value' => function (Event $event) {
+                    return $event->contact->name . ' (' .$event->contact->displayType() . ')';
+                }
+            ],
             [
                 'class' => ActionColumn::className(),
-                'urlCreator' => function ($action, User $model, $key, $index, $column) {
+                'urlCreator' => function ($action, Event $model, $key, $index, $column) {
                     return Url::toRoute([$action, 'id' => $model->id]);
                  }
             ],
