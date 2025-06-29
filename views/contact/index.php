@@ -8,6 +8,7 @@ use yii\grid\GridView;
 
 /** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var app\models\ContactSearch $searchModel */
 
 $this->title = 'Контакты';
 $this->params['breadcrumbs'][] = $this->title;
@@ -23,6 +24,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
+        'filterModel' => $searchModel,
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 

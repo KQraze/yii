@@ -4,11 +4,12 @@ namespace app\models;
 
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
+use app\models\Contact;
 
 /**
- * EventSearch represents the model behind the search form of `app\models\Event`.
+ * ContactSearch represents the model behind the search form of `app\models\Contact`.
  */
-class EventSearch extends Event
+class ContactSearch extends Contact
 {
     /**
      * {@inheritdoc}
@@ -16,8 +17,8 @@ class EventSearch extends Event
     public function rules()
     {
         return [
-            [['id', 'contact_id'], 'integer'],
-            [['date', 'title', 'description'], 'safe'],
+            [['id'], 'integer'],
+            [['name', 'phone', 'address', 'type'], 'safe'],
         ];
     }
 
@@ -40,7 +41,7 @@ class EventSearch extends Event
      */
     public function search($params, $formName = null)
     {
-        $query = Event::find();
+        $query = Contact::find();
 
         // add conditions that should always apply here
 
@@ -59,12 +60,12 @@ class EventSearch extends Event
         // grid filtering conditions
         $query->andFilterWhere([
             'id' => $this->id,
-            'date' => $this->date,
-            'contact_id' => $this->contact_id,
         ]);
 
-        $query->andFilterWhere(['like', 'title', $this->title])
-            ->andFilterWhere(['like', 'description', $this->description]);
+        $query->andFilterWhere(['like', 'name', $this->name])
+            ->andFilterWhere(['like', 'phone', $this->phone])
+            ->andFilterWhere(['like', 'address', $this->address])
+            ->andFilterWhere(['like', 'type', $this->type]);
 
         return $dataProvider;
     }
